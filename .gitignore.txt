@@ -1,4 +1,0 @@
-*.csproj
-*.sln
-*.txt
-*.dwlt
