@@ -1,3 +1,4 @@
-ArmChess*
-ProjectSettings
-Library
+*.csproj
+*.sln
+*.txt
+*.dwlt
