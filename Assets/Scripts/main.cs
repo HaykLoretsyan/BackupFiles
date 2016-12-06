@@ -38,7 +38,9 @@ public class main : MonoBehaviour
     Vector3 step;
     Vector3 start;
     Vector3 destination;
-    float height;
+    const double heightEtalon = 0.8f;
+    double pathLength;
+    double height;
     int CastlingX;
     int CastlingY;
     bool isCastling;
@@ -158,24 +160,20 @@ public class main : MonoBehaviour
             {
                 if (selectedChessman.transform.position.z == start.z)
                 {
-                    height = 0.8f;
+                    height = heightEtalon;
                 }
                 else
                 {
-                    
-                    float biggest;
-                    if (Mathf.Abs(start.x - destination.x) > Mathf.Abs(start.z - destination.z))
-                    {
-                        biggest = Mathf.Abs(selectedChessman.transform.position.x - start.x);
-                    }
-                    else
-                    {
-                        biggest = Mathf.Abs(selectedChessman.transform.position.z - start.z);
-                    }
-                    
-                    float prevHeight = height;
-                    height = Mathf.Cos(Mathf.Asin(Mathf.Abs(1 - biggest)));
-                    jump = (height - prevHeight) * 3;
+                    double prevHeight = height;
+                    double curPassedPath = Math.Sqrt(Math.Abs(selectedChessman.transform.position.x - start.x)*
+                                                     Math.Abs(selectedChessman.transform.position.x - start.x)+
+                                                     Math.Abs(selectedChessman.transform.position.z - start.z)*
+                                                     Math.Abs(selectedChessman.transform.position.z - start.z));
+
+                    height = heightEtalon + Math.Sqrt(pathLength*curPassedPath -
+                                                curPassedPath* curPassedPath);
+                    jump = (float)(height - prevHeight)*60;
+
                 }
             }
 
@@ -395,14 +393,22 @@ public class main : MonoBehaviour
             isCastling = false;
         }
 
-        start = GetTileCenter(selectedChessman.CurrentX,selectedChessman.CurrentY);
+        start = selectedChessman.transform.position;
         destination = GetTileCenter(x, y);
-        step = (destination - selectedChessman.transform.position);
-        float speed = Math.Max(Math.Abs(step.x), Math.Abs(step.z))*4;
+        step = (destination - start);
+        float speed = Math.Max(Math.Abs(step.x), Math.Abs(step.z))*6;
         step /= speed;
         float temp = step.z;
         step.z = 0;
         step.y = -temp;
+
+        if (selectedChessman.GetType() == typeof(knight))
+        {
+            pathLength = (float)Math.Sqrt(Math.Abs(destination.x - start.x)*
+                                          Math.Abs(destination.x - start.x)+
+                                          Math.Abs(destination.z - start.z)*
+                                          Math.Abs(destination.z - start.z));
+        }
 
         selectedChessman.SetPosition(x, y);
         selectedChessman.touched = true;
