@@ -162,6 +162,7 @@ public class main : MonoBehaviour
                 }
                 else
                 {
+                    
                     float biggest;
                     if (Mathf.Abs(start.x - destination.x) > Mathf.Abs(start.z - destination.z))
                     {
@@ -171,6 +172,7 @@ public class main : MonoBehaviour
                     {
                         biggest = Mathf.Abs(selectedChessman.transform.position.z - start.z);
                     }
+                    
                     float prevHeight = height;
                     height = Mathf.Cos(Mathf.Asin(Mathf.Abs(1 - biggest)));
                     jump = (height - prevHeight) * 3;
