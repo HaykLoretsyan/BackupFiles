@@ -171,7 +171,7 @@ public class bishop : Chessman
             i = CurrentX + 1;
             j = CurrentY + 1;
 
-            while (i < 7 && j < 8)
+            while (i < 8 && j < 8)
             {
                 if (temp[i, j] == null)
                 {
