@@ -2,8 +2,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Networking;
 
-public class main : MonoBehaviour
+public class main : NetworkBehaviour
 {
     public static main Instance;
     private Quaternion orientation = Quaternion.Euler(-90, 0, 0);
@@ -45,17 +46,33 @@ public class main : MonoBehaviour
     int CastlingY;
     bool isCastling;
 
+    private bool isMyTurn;
+
     void Awake()
     {
         Instance = this;
     }
 
+    //public override void OnStartServer()
+    //{
+    //    SpawnAllChessmen();
+    //}
+
     // Use this for initialization
-    void Start()
+    public override void OnStartLocalPlayer()
     {
         SpawnAllChessmen();
         fieldsUnderAttackBlack = new bool[8, 8];
         fieldsUnderAttackWhite = new bool[8, 8];
+
+        isMyTurn = true;
+        if (transform.position.z > 0)
+        {
+            Camera.main.transform.position = new Vector3(0.216f, 1.472f, 0.9f);
+            Camera.main.transform.rotation = Quaternion.Euler(30, 180, 0);
+            isMyTurn = false;
+        }
+
     }
 
     void SpawnChessman(int index, int x, int y)
@@ -64,9 +81,9 @@ public class main : MonoBehaviour
 
         if (index == 4)
         {
-            currentOrientation = Quaternion.Euler(-90,-90,0);
+            currentOrientation = Quaternion.Euler(-90, -90, 0);
         }
-        else if(index == 10)
+        else if (index == 10)
         {
             currentOrientation = Quaternion.Euler(-90, 90, 0);
         }
@@ -76,13 +93,15 @@ public class main : MonoBehaviour
         chessmans[x, y] = go.GetComponent<Chessman>();
         chessmans[x, y].SetPosition(x, y);
 
+        NetworkServer.Spawn(go);
+
         activeFigure.Add(go);
 
-        if(index == 0)
+        if (index == 0)
         {
             whiteKing = chessmans[x, y];
         }
-        else if(index == 6)
+        else if (index == 6)
         {
             blackKing = chessmans[x, y];
         }
@@ -147,6 +166,7 @@ public class main : MonoBehaviour
         CheckForMove();
         ActualMove();
         UpdateSelection();
+
     }
 
     private void ActualMove()
@@ -165,14 +185,14 @@ public class main : MonoBehaviour
                 else
                 {
                     double prevHeight = height;
-                    double curPassedPath = Math.Sqrt(Math.Abs(selectedChessman.transform.position.x - start.x)*
-                                                     Math.Abs(selectedChessman.transform.position.x - start.x)+
-                                                     Math.Abs(selectedChessman.transform.position.z - start.z)*
+                    double curPassedPath = Math.Sqrt(Math.Abs(selectedChessman.transform.position.x - start.x) *
+                                                     Math.Abs(selectedChessman.transform.position.x - start.x) +
+                                                     Math.Abs(selectedChessman.transform.position.z - start.z) *
                                                      Math.Abs(selectedChessman.transform.position.z - start.z));
 
-                    height = heightEtalon + Math.Sqrt(pathLength*curPassedPath -
-                                                curPassedPath* curPassedPath);
-                    jump = (float)(height - prevHeight)*60;
+                    height = heightEtalon + Math.Sqrt(pathLength * curPassedPath -
+                                                curPassedPath * curPassedPath);
+                    jump = (float)(height - prevHeight) * 60;
 
                 }
             }
@@ -197,7 +217,7 @@ public class main : MonoBehaviour
                 }
                 else
                 {
-                    if(isCastling)
+                    if (isCastling)
                     {
                         Castling(CastlingX, CastlingY);
                     }
@@ -207,7 +227,7 @@ public class main : MonoBehaviour
                     CheckForEnd();
                 }
             }
-            else if(step.x == 0)
+            else if (step.x == 0)
             {
                 if (step.y < 0)
                 {
@@ -262,6 +282,7 @@ public class main : MonoBehaviour
             }
             else
             {
+                //Debug.Log("Actual moving");
                 if (selectedChessman.transform.position.x > destination.x)
                 {
                     if (selectedChessman.GetType() == typeof(knight))
@@ -330,8 +351,9 @@ public class main : MonoBehaviour
                 // Move the chessman
                 if (allowed[selectionX, selectionY])
                 {
-                    moved = true;
+                    //CmdMoveChessman(selectedChessman.CurrentX, selectedChessman.CurrentY, selectionX, selectionY);
                     MoveChessman(selectionX, selectionY);
+                    moved = true;
                 }
             }
         }
@@ -350,11 +372,11 @@ public class main : MonoBehaviour
             Destroy(chessmans[x, y].gameObject);
             chessmans[x, y] = null;
         }
-        else if(selectedChessman.GetType() == typeof(pawn) )
+        else if (selectedChessman.GetType() == typeof(pawn))
         {
-            foreach(Chessman figure in chessmans)
+            foreach (Chessman figure in chessmans)
             {
-                if(figure != null)
+                if (figure != null)
                 {
                     figure.elPassants = false;
                 }
@@ -381,7 +403,7 @@ public class main : MonoBehaviour
 
         if (selectedChessman.GetType() == typeof(king))
         {
-            if(Mathf.Abs(selectedChessman.CurrentX - x) > 1)
+            if (Mathf.Abs(selectedChessman.CurrentX - x) > 1)
             {
                 isCastling = true;
                 CastlingX = x;
@@ -396,7 +418,11 @@ public class main : MonoBehaviour
         start = selectedChessman.transform.position;
         destination = GetTileCenter(x, y);
         step = (destination - start);
-        float speed = Math.Max(Math.Abs(step.x), Math.Abs(step.z))*6;
+        if (Math.Abs(step.x) < 0.01)
+            step.x = 0;
+        if (Math.Abs(step.z) < 0.01)
+            step.z = 0;
+        float speed = Math.Max(Math.Abs(step.x), Math.Abs(step.z)) * 6;
         step /= speed;
         float temp = step.z;
         step.z = 0;
@@ -404,9 +430,9 @@ public class main : MonoBehaviour
 
         if (selectedChessman.GetType() == typeof(knight))
         {
-            pathLength = (float)Math.Sqrt(Math.Abs(destination.x - start.x)*
-                                          Math.Abs(destination.x - start.x)+
-                                          Math.Abs(destination.z - start.z)*
+            pathLength = (float)Math.Sqrt(Math.Abs(destination.x - start.x) *
+                                          Math.Abs(destination.x - start.x) +
+                                          Math.Abs(destination.z - start.z) *
                                           Math.Abs(destination.z - start.z));
         }
 
@@ -466,7 +492,7 @@ public class main : MonoBehaviour
     private void Castling(int x, int y)
     {
         //white king's short castling
-        if(x == 6 && y == 0)
+        if (x == 6 && y == 0)
         {
             Chessman selectedRook = chessmans[7, 0];
             chessmans[selectedRook.CurrentX, selectedRook.CurrentY] = null;
@@ -519,8 +545,8 @@ public class main : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 25.0f, LayerMask.GetMask("chessPlane")))
         {
-            selectionX = (int)(18.735*hit.point.x);
-            selectionY = (int)(18.735*hit.point.z);
+            selectionX = (int)(18.735 * hit.point.x);
+            selectionY = (int)(18.735 * hit.point.z);
         }
         else
         {
@@ -528,7 +554,7 @@ public class main : MonoBehaviour
             selectionY = -1;
         }
 
-        if(selectionX == 8 || selectionY == 8)
+        if (selectionX == 8 || selectionY == 8)
         {
             selectionX = -1;
             selectionY = -1;
@@ -567,7 +593,7 @@ public class main : MonoBehaviour
                 FieldHighlighting.Instance.HideHighlights();
                 FieldHighlighting.Instance.HighlightAllowedMoves(possibleMoves);
             }
-            else if(!moved)
+            else if (!moved)
             {
                 if (selection)
                 {
@@ -601,9 +627,9 @@ public class main : MonoBehaviour
 
     private bool[,] FieldsUnderAttack(bool forWhite)
     {
-        bool[,] r = new bool[8,8];
+        bool[,] r = new bool[8, 8];
 
-        for(int i = 0; i < 8; ++i)
+        for (int i = 0; i < 8; ++i)
         {
             for (int j = 0; j < 8; ++j)
             {
@@ -624,15 +650,15 @@ public class main : MonoBehaviour
         blackKing.block = false;
         foreach (Chessman figure in chessmans)
         {
-            if(figure != null)
+            if (figure != null)
             {
                 if (figure.isWhite != forWhite)
                 {
                     if (figure.GetType() == typeof(pawn))
                     {
-                        if(figure.isWhite)
+                        if (figure.isWhite)
                         {
-                            if((figure.CurrentX == x - 1 || figure.CurrentX == x + 1) && 
+                            if ((figure.CurrentX == x - 1 || figure.CurrentX == x + 1) &&
                                 figure.CurrentY == y - 1)
                             {
                                 whiteKing.block = true;
@@ -654,7 +680,7 @@ public class main : MonoBehaviour
                     else
                     {
                         figure.checking = true;
-                        
+
                         bool[,] temp = figure.PossibleMove();
                         figure.checking = false;
                         if (temp[x, y])
@@ -675,7 +701,7 @@ public class main : MonoBehaviour
 
     public bool IsChecked(Chessman king)
     {
-        return FieldIsAttacked(king.isWhite,king.CurrentX,king.CurrentY);
+        return FieldIsAttacked(king.isWhite, king.CurrentX, king.CurrentY);
     }
 
     private bool[,] CheckPath()
@@ -683,13 +709,13 @@ public class main : MonoBehaviour
         bool[,] checkedFields = new bool[8, 8];
 
         Chessman first = null, second = null;
-        CheckedFigures(ref(first), ref(second));
+        CheckedFigures(ref (first), ref (second));
 
-        if(second != null)
+        if (second != null)
         {
             doubleChecked = true;
         }
-        else if(!isWhiteTurn)
+        else if (!isWhiteTurn)
         {
             //pawn
             if (first.GetType() == typeof(pawn))
@@ -738,15 +764,15 @@ public class main : MonoBehaviour
                 }
             }
             //rook
-            else if(first.GetType() == typeof(rook))
+            else if (first.GetType() == typeof(rook))
             {
                 //vertical
-                if(first.CurrentX == whiteKing.CurrentX)
+                if (first.CurrentX == whiteKing.CurrentX)
                 {
-                    if(first.CurrentY > whiteKing.CurrentY)
+                    if (first.CurrentY > whiteKing.CurrentY)
                     {
                         //up
-                        for(int i = 1; i <= first.CurrentY - whiteKing.CurrentY; ++i)
+                        for (int i = 1; i <= first.CurrentY - whiteKing.CurrentY; ++i)
                         {
                             checkedFields[whiteKing.CurrentX, whiteKing.CurrentY + i] = true;
                         }
@@ -784,7 +810,7 @@ public class main : MonoBehaviour
 
             }
             //queen
-            else if(first.GetType() == typeof(queen))
+            else if (first.GetType() == typeof(queen))
             {
                 //up-right
                 if (first.CurrentX > whiteKing.CurrentX && first.CurrentY > whiteKing.CurrentY)
@@ -1042,21 +1068,21 @@ public class main : MonoBehaviour
 
     private void CheckedFigures(ref Chessman first, ref Chessman second)
     {
-        if(!isWhiteTurn)
+        if (!isWhiteTurn)
         {
-            foreach(Chessman figure in chessmans)
+            foreach (Chessman figure in chessmans)
             {
-                if(figure != null && !figure.isWhite)
+                if (figure != null && !figure.isWhite)
                 {
-                    bool[,] moves = new bool[8,8];
+                    bool[,] moves = new bool[8, 8];
                     if (figure.GetType() != typeof(king))
                     {
                         moves = figure.PossibleMove();
                     }
 
-                    if(moves[whiteKing.CurrentX,whiteKing.CurrentY])
+                    if (moves[whiteKing.CurrentX, whiteKing.CurrentY])
                     {
-                        if(first == null)
+                        if (first == null)
                         {
                             first = figure;
                         }
@@ -1098,11 +1124,11 @@ public class main : MonoBehaviour
 
     private bool AreAnyPossibleMoves(bool forWhite)
     {
-        foreach(Chessman figure in chessmans)
+        foreach (Chessman figure in chessmans)
         {
-            if(figure != null)
+            if (figure != null)
             {
-                if(figure.isWhite == forWhite)
+                if (figure.isWhite == forWhite)
                 {
                     if (figure.GetType() == typeof(king))
                     {
@@ -1119,7 +1145,7 @@ public class main : MonoBehaviour
                     }
 
                     bool[,] moves = figure.PossibleMove();
-                    if(SearchForTrue(moves))
+                    if (SearchForTrue(moves))
                     {
 
 
@@ -1134,11 +1160,11 @@ public class main : MonoBehaviour
 
     private bool SearchForTrue(bool[,] moves)
     {
-        for(int i = 0; i < 8; ++i)
+        for (int i = 0; i < 8; ++i)
         {
-            for(int j = 0; j < 8; ++j)
+            for (int j = 0; j < 8; ++j)
             {
-                if(moves[i,j] == true)
+                if (moves[i, j] == true)
                 {
                     return true;
                 }
@@ -1176,4 +1202,24 @@ public class main : MonoBehaviour
         SpawnAllChessmen();
     }
 
+    [Command]
+    public void CmdMoveChessman(int currentX, int currentY, int x, int y)
+    {
+        //RpcMoveChessman(currentX, currentY, x, y);
+        RpcMoveChessman();
+        MoveHelp(currentX, currentY);
+        MoveChessman(x, y);
+    }
+
+    [ClientRpc]
+    public void RpcMoveChessman()
+    {
+        isMyTurn = !isMyTurn;
+    }
+
+    private void MoveHelp(int currentX, int currentY)
+    {
+        selectedChessman = chessmans[currentX, currentY];
+        moved = true;
+    }
 }
