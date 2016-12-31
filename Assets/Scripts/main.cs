@@ -39,7 +39,7 @@ public class main : NetworkBehaviour
     Vector3 step;
     Vector3 start;
     Vector3 destination;
-    const double heightEtalon = 0.8f;
+    const float heightEtalon = 0.76f;
     double pathLength;
     double height;
     int CastlingX;
@@ -52,11 +52,6 @@ public class main : NetworkBehaviour
     {
         Instance = this;
     }
-
-    //public override void OnStartServer()
-    //{
-    //    SpawnAllChessmen();
-    //}
 
     // Use this for initialization
     public override void OnStartLocalPlayer()
@@ -92,8 +87,6 @@ public class main : NetworkBehaviour
         go.transform.SetParent(transform);
         chessmans[x, y] = go.GetComponent<Chessman>();
         chessmans[x, y].SetPosition(x, y);
-
-        NetworkServer.Spawn(go);
 
         activeFigure.Add(go);
 
@@ -221,7 +214,7 @@ public class main : NetworkBehaviour
                     {
                         Castling(CastlingX, CastlingY);
                     }
-                    selectedChessman.transform.position = new Vector3(destination.x, 0.8f, destination.z);
+                    selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                     selectedChessman = null;
                     moved = false;
                     CheckForEnd();
@@ -248,7 +241,7 @@ public class main : NetworkBehaviour
                     }
                     else
                     {
-                        selectedChessman.transform.position = new Vector3(destination.x, 0.8f, destination.z);
+                        selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                         selectedChessman = null;
                         moved = false;
                         CheckForEnd();
@@ -273,7 +266,7 @@ public class main : NetworkBehaviour
                     }
                     else
                     {
-                        selectedChessman.transform.position = new Vector3(destination.x, 0.8f, destination.z);
+                        selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                         selectedChessman = null;
                         moved = false;
                         CheckForEnd();
@@ -304,7 +297,7 @@ public class main : NetworkBehaviour
                     {
                         Castling(CastlingX, CastlingY);
                     }
-                    selectedChessman.transform.position = new Vector3(destination.x, 0.8f, destination.z);
+                    selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                     selectedChessman = null;
                     moved = false;
                     CheckForEnd();
@@ -353,7 +346,6 @@ public class main : NetworkBehaviour
                 {
                     //CmdMoveChessman(selectedChessman.CurrentX, selectedChessman.CurrentY, selectionX, selectionY);
                     MoveChessman(selectionX, selectionY);
-                    moved = true;
                 }
             }
         }
@@ -362,6 +354,8 @@ public class main : NetworkBehaviour
 
     private void MoveChessman(int x, int y)
     {
+        moved = true;
+
         chessmans[selectedChessman.CurrentX, selectedChessman.CurrentY] = null;
         whiteKing.block = false;
         blackKing.block = false;
@@ -611,7 +605,7 @@ public class main : NetworkBehaviour
     {
         Vector3 origin = Vector3.zero;
         origin.x += (TILE_SIZE * x) + TILE_OFFSET;
-        origin.y = 0.8f;
+        origin.y = heightEtalon;
         origin.z += (TILE_SIZE * y) + TILE_OFFSET;
         return origin;
     }
@@ -620,7 +614,7 @@ public class main : NetworkBehaviour
     {
         Vector3 origin = Vector3.zero;
         origin.x += (TILE_SIZE * x) + TILE_OFFSET;
-        origin.y += 0.91f;
+        origin.y += heightEtalon + 0.11f;
         origin.z += (TILE_SIZE * y) + TILE_OFFSET;
         return origin;
     }
@@ -1205,14 +1199,14 @@ public class main : NetworkBehaviour
     [Command]
     public void CmdMoveChessman(int currentX, int currentY, int x, int y)
     {
-        //RpcMoveChessman(currentX, currentY, x, y);
-        RpcMoveChessman();
-        MoveHelp(currentX, currentY);
-        MoveChessman(x, y);
+        RpcMoveChessman(currentX, currentY, x, y);
+        //RpcMoveChessman();
+        //MoveHelp(currentX, currentY);
+        //MoveChessman(x, y);
     }
 
     [ClientRpc]
-    public void RpcMoveChessman()
+    public void RpcMoveChessman(int currentX, int currentY, int x, int y)
     {
         isMyTurn = !isMyTurn;
     }
