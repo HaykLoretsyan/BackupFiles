@@ -46,13 +46,7 @@ public class main : NetworkBehaviour
     int CastlingY;
     bool isCastling;
 
-    private bool isMyTurn;
-
-    //void Awake()
-    //{
-        
-    //    Instance = this;
-    //}
+    public static bool isMyTurn;
 
     // Use this for initialization
     public override void OnStartLocalPlayer()
@@ -65,9 +59,9 @@ public class main : NetworkBehaviour
         isMyTurn = true;
         if (transform.position.z > 0)
         {
+            isMyTurn = false;
             Camera.main.transform.position = new Vector3(0.216f, 1.472f, 0.9f);
             Camera.main.transform.rotation = Quaternion.Euler(30, 180, 0);
-            isMyTurn = false;
         }
 
     }
@@ -164,7 +158,6 @@ public class main : NetworkBehaviour
         CheckForMove();
         ActualMove();
         UpdateSelection();
-
     }
 
     private void ActualMove()
@@ -349,7 +342,8 @@ public class main : NetworkBehaviour
                 // Move the chessman
                 if (allowed[selectionX, selectionY])
                 {
-                    //CmdMoveChessman(selectedChessman.CurrentX, selectedChessman.CurrentY, selectionX, selectionY);
+                    Debug.Log("CmdMoveChessman");
+                    CmdMoveChessman(selectedChessman.CurrentX, selectedChessman.CurrentY, selectionX, selectionY);
                     MoveChessman(selectionX, selectionY);
                 }
             }
@@ -563,7 +557,7 @@ public class main : NetworkBehaviour
 
     private void UpdateSelection()
     {
-        if (Input.GetMouseButtonDown(0) && !moved)
+        if (Input.GetMouseButtonDown(0) && !moved && isMyTurn)
         {
             if (selectionX >= 0 && selectionY >= 0 && chessmans[selectionX, selectionY] != null
                 && chessmans[selectionX, selectionY].isWhite == isWhiteTurn)
@@ -603,7 +597,6 @@ public class main : NetworkBehaviour
             }
         }
 
-        //moved = false;
     }
 
     private Vector3 GetTileCenter(int x, int y)
@@ -1213,7 +1206,7 @@ public class main : NetworkBehaviour
     [ClientRpc]
     public void RpcMoveChessman(int currentX, int currentY, int x, int y)
     {
-        isMyTurn = !isMyTurn;
+        main.isMyTurn = !main.isMyTurn;
     }
 
     private void MoveHelp(int currentX, int currentY)
