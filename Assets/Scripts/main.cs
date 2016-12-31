@@ -48,14 +48,16 @@ public class main : NetworkBehaviour
 
     private bool isMyTurn;
 
-    void Awake()
-    {
-        Instance = this;
-    }
+    //void Awake()
+    //{
+        
+    //    Instance = this;
+    //}
 
     // Use this for initialization
     public override void OnStartLocalPlayer()
     {
+        Instance = this;
         SpawnAllChessmen();
         fieldsUnderAttackBlack = new bool[8, 8];
         fieldsUnderAttackWhite = new bool[8, 8];
@@ -155,6 +157,9 @@ public class main : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!isLocalPlayer)
+            return;
+
         UpdateMousePosition();
         CheckForMove();
         ActualMove();
