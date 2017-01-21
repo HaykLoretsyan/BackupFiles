@@ -34,7 +34,8 @@ public class main : NetworkBehaviour
     public bool[,] fieldsUnderAttackWhite;
     public bool[,] fieldsUnderAttackBlack;
     public bool isWhiteTurn = true;
-    private bool moved = false;
+    public bool moved = false;
+    public bool opponent_moved = false;
 
     Vector3 step;
     Vector3 start;
@@ -47,7 +48,12 @@ public class main : NetworkBehaviour
     bool isCastling;
 
     public static bool isMyTurn;
-
+    public NetworkManager manager;
+    GameObject[] gob;
+    void Awake()
+    {
+        manager = (GameObject.FindGameObjectWithTag("Manager")).GetComponent<NetworkManager>();
+    }
     // Use this for initialization
     public override void OnStartLocalPlayer()
     {
@@ -56,12 +62,17 @@ public class main : NetworkBehaviour
         fieldsUnderAttackBlack = new bool[8, 8];
         fieldsUnderAttackWhite = new bool[8, 8];
 
-        isMyTurn = true;
         if (transform.position.z > 0)
         {
             isMyTurn = false;
             Camera.main.transform.position = new Vector3(0.216f, 1.472f, 0.9f);
             Camera.main.transform.rotation = Quaternion.Euler(30, 180, 0);
+        }
+        else
+        {
+            isMyTurn = true;
+            Camera.main.transform.position = new Vector3(0.216f, 1.472f, -0.456f);
+            Camera.main.transform.rotation = Quaternion.Euler(30, 0, 0);
         }
 
     }
@@ -158,6 +169,13 @@ public class main : NetworkBehaviour
         CheckForMove();
         ActualMove();
         UpdateSelection();
+        gob = GameObject.FindGameObjectsWithTag("Player");
+
+        //if (gob.Length < 2)
+        //{
+        //    Debug.Log("Disconnect");
+        //    manager.StopHost();
+        //}
     }
 
     private void ActualMove()
@@ -212,6 +230,7 @@ public class main : NetworkBehaviour
                     {
                         Castling(CastlingX, CastlingY);
                     }
+                    CmdMoveChessman(selectedChessman.CurrentX, selectedChessman.CurrentY, selectionX, selectionY);
                     selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                     selectedChessman = null;
                     moved = false;
@@ -239,6 +258,7 @@ public class main : NetworkBehaviour
                     }
                     else
                     {
+                        CmdMoveChessman(selectedChessman.CurrentX, selectedChessman.CurrentY, selectionX, selectionY);
                         selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                         selectedChessman = null;
                         moved = false;
@@ -264,6 +284,7 @@ public class main : NetworkBehaviour
                     }
                     else
                     {
+                        CmdMoveChessman(selectedChessman.CurrentX, selectedChessman.CurrentY, selectionX, selectionY);
                         selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                         selectedChessman = null;
                         moved = false;
@@ -273,7 +294,6 @@ public class main : NetworkBehaviour
             }
             else
             {
-                //Debug.Log("Actual moving");
                 if (selectedChessman.transform.position.x > destination.x)
                 {
                     if (selectedChessman.GetType() == typeof(knight))
@@ -295,6 +315,7 @@ public class main : NetworkBehaviour
                     {
                         Castling(CastlingX, CastlingY);
                     }
+                    CmdMoveChessman(selectedChessman.CurrentX, selectedChessman.CurrentY, selectionX, selectionY);
                     selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                     selectedChessman = null;
                     moved = false;
@@ -342,8 +363,7 @@ public class main : NetworkBehaviour
                 // Move the chessman
                 if (allowed[selectionX, selectionY])
                 {
-                    Debug.Log("CmdMoveChessman");
-                    CmdMoveChessman(selectedChessman.CurrentX, selectedChessman.CurrentY, selectionX, selectionY);
+                    //CmdMoveChessman(selectedChessman.CurrentX, selectedChessman.CurrentY, selectionX, selectionY);
                     MoveChessman(selectionX, selectionY);
                 }
             }
