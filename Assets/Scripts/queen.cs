@@ -7,7 +7,7 @@ public class queen : Chessman {
     {
         bool[,] r = new bool[8, 8];
 
-        Chessman[,] temp = main.Instance.chessmans;
+        Chessman[,] temp = main.chessmans;
 
         if (isWhite) //white
         {

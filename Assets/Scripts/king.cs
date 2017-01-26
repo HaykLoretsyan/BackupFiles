@@ -31,7 +31,7 @@ public class king : Chessman {
     public override bool[,] PossibleMove()
     {
         bool[,] r = new bool[8,8];
-        Chessman[,] temp = main.Instance.chessmans;
+        Chessman[,] temp = main.chessmans;
 
 
         if (isWhite) //white
@@ -196,7 +196,7 @@ public class king : Chessman {
             return;
         }
 
-        Chessman[,] temp = main.Instance.chessmans;
+        Chessman[,] temp = main.chessmans;
 
         if (isWhite) //white
         {
@@ -267,15 +267,15 @@ public class king : Chessman {
     {
         if (block)
         {
-            Chessman figure = main.Instance.chessmans[x, y];
-            main.Instance.chessmans[CurrentX, CurrentY] = null;
+            Chessman figure = main.chessmans[x, y];
+            main.chessmans[CurrentX, CurrentY] = null;
             int prevX = CurrentX, prevY = CurrentY;
             SetPosition(x, y);
-            main.Instance.chessmans[x, y] = this;
+            main.chessmans[x, y] = this;
 
             bool ret = !main.Instance.IsChecked(this);
-            main.Instance.chessmans[x, y] = figure;
-            main.Instance.chessmans[prevX, prevY] = this;
+            main.chessmans[x, y] = figure;
+            main.chessmans[prevX, prevY] = this;
             SetPosition(prevX, prevY);
 
             return ret;

@@ -34,7 +34,7 @@ public abstract class Chessman : MonoBehaviour {
 
     protected void OnKingsWay(ref bool[,] r)
     {      
-        Chessman[,] temp = main.Instance.chessmans;
+        Chessman[,] temp = main.chessmans;
         Chessman figure = temp[CurrentX, CurrentY];
         int x = CurrentX, y = CurrentY;
         temp[CurrentX, CurrentY] = null;

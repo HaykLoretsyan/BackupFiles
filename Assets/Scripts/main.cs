@@ -14,12 +14,19 @@ public class main : NetworkBehaviour
 
     private int selectionX = -5;
     private int selectionY = -5;
+    private int prevSelectionX = -5;
+    private int prevSelectionY = -5;
+
+    public static int rSelectionX = -5;
+    public static int rSelectionY = -5;
+    private int moveToX = -5;
+    private int moveToY = -5;
 
     public List<GameObject> figurePrefabs;
     private List<GameObject> activeFigure;
 
-    public Chessman[,] chessmans;
-    private Chessman selectedChessman;
+    public static Chessman[,] chessmans;
+    public static Chessman selectedChessman;
     public static Chessman whiteKing;
     public static Chessman blackKing;
 
@@ -50,6 +57,9 @@ public class main : NetworkBehaviour
     public static bool isMyTurn;
     public NetworkManager manager;
     GameObject[] gob;
+    bool connected = false;
+    public static bool remotelyMoved = false;
+
     void Awake()
     {
         manager = (GameObject.FindGameObjectWithTag("Manager")).GetComponent<NetworkManager>();
@@ -169,13 +179,22 @@ public class main : NetworkBehaviour
         CheckForMove();
         ActualMove();
         UpdateSelection();
+
+        if(remotelyMoved && !moved)
+        {
+            MoveChessman(rSelectionX,rSelectionY);
+        }
+
         gob = GameObject.FindGameObjectsWithTag("Player");
 
-        //if (gob.Length < 2)
-        //{
-        //    Debug.Log("Disconnect");
-        //    manager.StopHost();
-        //}
+        if(gob.Length == 2)
+        {
+            connected = true;
+        }
+        else if (connected)
+        {
+            manager.StopHost();
+        }
     }
 
     private void ActualMove()
@@ -230,9 +249,11 @@ public class main : NetworkBehaviour
                     {
                         Castling(CastlingX, CastlingY);
                     }
-                    CmdMoveChessman(selectedChessman.CurrentX, selectedChessman.CurrentY, selectionX, selectionY);
+                    if (!remotelyMoved)
+                        CmdMoveChessman(prevSelectionX, prevSelectionY, moveToX, moveToY);
                     selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                     selectedChessman = null;
+                    remotelyMoved = false;
                     moved = false;
                     CheckForEnd();
                 }
@@ -258,9 +279,11 @@ public class main : NetworkBehaviour
                     }
                     else
                     {
-                        CmdMoveChessman(selectedChessman.CurrentX, selectedChessman.CurrentY, selectionX, selectionY);
+                        if (!remotelyMoved)
+                            CmdMoveChessman(prevSelectionX, prevSelectionY, moveToX, moveToY);
                         selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                         selectedChessman = null;
+                        remotelyMoved = false;
                         moved = false;
                         CheckForEnd();
                     }
@@ -284,9 +307,11 @@ public class main : NetworkBehaviour
                     }
                     else
                     {
-                        CmdMoveChessman(selectedChessman.CurrentX, selectedChessman.CurrentY, selectionX, selectionY);
+                        if (!remotelyMoved)
+                            CmdMoveChessman(prevSelectionX, prevSelectionY, moveToX, moveToY);
                         selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                         selectedChessman = null;
+                        remotelyMoved = false;
                         moved = false;
                         CheckForEnd();
                     }
@@ -315,9 +340,11 @@ public class main : NetworkBehaviour
                     {
                         Castling(CastlingX, CastlingY);
                     }
-                    CmdMoveChessman(selectedChessman.CurrentX, selectedChessman.CurrentY, selectionX, selectionY);
+                    if(!remotelyMoved)
+                        CmdMoveChessman(prevSelectionX, prevSelectionY, moveToX, moveToY);
                     selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                     selectedChessman = null;
+                    remotelyMoved = false;
                     moved = false;
                     CheckForEnd();
                 }
@@ -363,8 +390,9 @@ public class main : NetworkBehaviour
                 // Move the chessman
                 if (allowed[selectionX, selectionY])
                 {
-                    //CmdMoveChessman(selectedChessman.CurrentX, selectedChessman.CurrentY, selectionX, selectionY);
-                    MoveChessman(selectionX, selectionY);
+                    moveToX = selectionX;
+                    moveToY = selectionY;
+                    MoveChessman(moveToX, moveToY);
                 }
             }
         }
@@ -376,6 +404,8 @@ public class main : NetworkBehaviour
         moved = true;
 
         chessmans[selectedChessman.CurrentX, selectedChessman.CurrentY] = null;
+        prevSelectionX = selectedChessman.CurrentX;
+        prevSelectionY = selectedChessman.CurrentY;
         whiteKing.block = false;
         blackKing.block = false;
 
@@ -1226,6 +1256,13 @@ public class main : NetworkBehaviour
     [ClientRpc]
     public void RpcMoveChessman(int currentX, int currentY, int x, int y)
     {
+        if(!main.isMyTurn)
+        {
+            main.remotelyMoved = true;
+            main.selectedChessman = main.chessmans[currentX,currentY];
+            main.rSelectionX = x;
+            main.rSelectionY = y;
+        }
         main.isMyTurn = !main.isMyTurn;
     }
 

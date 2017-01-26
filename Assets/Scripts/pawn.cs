@@ -6,7 +6,7 @@ public class pawn : Chessman {
     public override bool[,] PossibleMove()
     {
         bool[,] r = new bool[8, 8];
-        Chessman[,] temp = main.Instance.chessmans;
+        Chessman[,] temp = main.chessmans;
 
         //white
         if (isWhite)
@@ -83,11 +83,11 @@ public class pawn : Chessman {
         else
         {
             //1-step
-            if (CurrentY > 0 && main.Instance.chessmans[CurrentX, CurrentY - 1] == null)
+            if (CurrentY > 0 && main.chessmans[CurrentX, CurrentY - 1] == null)
             {
                 r[CurrentX, CurrentY - 1] = true;
                 //2-step
-                if (!touched && main.Instance.chessmans[CurrentX, CurrentY - 2] == null)
+                if (!touched && main.chessmans[CurrentX, CurrentY - 2] == null)
                 {
                     r[CurrentX, CurrentY - 2] = true;
                 }
