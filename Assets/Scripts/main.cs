@@ -3,8 +3,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.Networking;
+using UnityEngine.VR;
 
-public class main : NetworkBehaviour
+public class main : MonoBehaviour
 {
     public static main Instance;
     private Quaternion orientation = Quaternion.Euler(-90, 0, 0);
@@ -55,17 +56,17 @@ public class main : NetworkBehaviour
     bool isCastling;
 
     public static bool isMyTurn;
-    public NetworkManager manager;
+    //public NetworkManager manager;
     GameObject[] gob;
     bool connected = false;
     public static bool remotelyMoved = false;
 
     void Awake()
     {
-        manager = (GameObject.FindGameObjectWithTag("Manager")).GetComponent<NetworkManager>();
+        //manager = (GameObject.FindGameObjectWithTag("Manager")).GetComponent<NetworkManager>();
     }
     // Use this for initialization
-    public override void OnStartLocalPlayer()
+    /*public override void OnStartLocalPlayer()
     {
         Instance = this;
         SpawnAllChessmen();
@@ -85,6 +86,15 @@ public class main : NetworkBehaviour
             Camera.main.transform.rotation = Quaternion.Euler(30, 0, 0);
         }
 
+    }
+    */
+
+    private void Start()
+    {
+        Instance = this;
+        SpawnAllChessmen();
+        fieldsUnderAttackBlack = new bool[8, 8];
+        fieldsUnderAttackWhite = new bool[8, 8];
     }
 
     void SpawnChessman(int index, int x, int y)
@@ -172,29 +182,29 @@ public class main : NetworkBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (!isLocalPlayer)
-            return;
+        //if (!isLocalPlayer)
+        //    return;
 
         UpdateMousePosition();
         CheckForMove();
         ActualMove();
         UpdateSelection();
 
-        if(remotelyMoved && !moved)
-        {
-            MoveChessman(rSelectionX,rSelectionY);
-        }
+        //if(remotelyMoved && !moved)
+        //{
+        //    MoveChessman(rSelectionX,rSelectionY);
+        //}
 
-        gob = GameObject.FindGameObjectsWithTag("Player");
+        //gob = GameObject.FindGameObjectsWithTag("Player");
 
-        if(gob.Length == 2)
-        {
-            connected = true;
-        }
-        else if (connected)
-        {
-            manager.StopHost();
-        }
+        //if(gob.Length == 2)
+        //{
+        //    connected = true;
+        //}
+        //else if (connected)
+        //{
+        //    manager.StopHost();
+        //}
     }
 
     private void ActualMove()
@@ -249,8 +259,8 @@ public class main : NetworkBehaviour
                     {
                         Castling(CastlingX, CastlingY);
                     }
-                    if (!remotelyMoved)
-                        CmdMoveChessman(prevSelectionX, prevSelectionY, moveToX, moveToY);
+                    //if (!remotelyMoved)
+                    //    CmdMoveChessman(prevSelectionX, prevSelectionY, moveToX, moveToY);
                     selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                     selectedChessman = null;
                     remotelyMoved = false;
@@ -279,8 +289,8 @@ public class main : NetworkBehaviour
                     }
                     else
                     {
-                        if (!remotelyMoved)
-                            CmdMoveChessman(prevSelectionX, prevSelectionY, moveToX, moveToY);
+                        //if (!remotelyMoved)
+                        //    CmdMoveChessman(prevSelectionX, prevSelectionY, moveToX, moveToY);
                         selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                         selectedChessman = null;
                         remotelyMoved = false;
@@ -307,8 +317,8 @@ public class main : NetworkBehaviour
                     }
                     else
                     {
-                        if (!remotelyMoved)
-                            CmdMoveChessman(prevSelectionX, prevSelectionY, moveToX, moveToY);
+                        //if (!remotelyMoved)
+                        //    CmdMoveChessman(prevSelectionX, prevSelectionY, moveToX, moveToY);
                         selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                         selectedChessman = null;
                         remotelyMoved = false;
@@ -340,8 +350,8 @@ public class main : NetworkBehaviour
                     {
                         Castling(CastlingX, CastlingY);
                     }
-                    if(!remotelyMoved)
-                        CmdMoveChessman(prevSelectionX, prevSelectionY, moveToX, moveToY);
+                    //if(!remotelyMoved)
+                    //    CmdMoveChessman(prevSelectionX, prevSelectionY, moveToX, moveToY);
                     selectedChessman.transform.position = new Vector3(destination.x, heightEtalon, destination.z);
                     selectedChessman = null;
                     remotelyMoved = false;
@@ -584,9 +594,11 @@ public class main : NetworkBehaviour
     {
         if (!Camera.main)
             return;
-
+        //Quaternion HMDRotation = InputTracking.GetLocalRotation(VRNode.CenterEye);
+        //Debug.Log(HMDRotation);
         RaycastHit hit;
-        if (Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit, 25.0f, LayerMask.GetMask("chessPlane")))
+        Ray raydirection = new Ray(transform.position, InputTracking.GetLocalRotation(VRNode.CenterEye).eulerAngles);
+        if (Physics.Raycast(raydirection, out hit, 25.0f, LayerMask.GetMask("chessPlane")))
         {
             selectionX = (int)(18.735 * hit.point.x);
             selectionY = (int)(18.735 * hit.point.z);
@@ -607,7 +619,7 @@ public class main : NetworkBehaviour
 
     private void UpdateSelection()
     {
-        if (Input.GetMouseButtonDown(0) && !moved && isMyTurn)
+        if (Input.GetMouseButtonDown(0) && !moved /*&& isMyTurn*/)
         {
             if (selectionX >= 0 && selectionY >= 0 && chessmans[selectionX, selectionY] != null
                 && chessmans[selectionX, selectionY].isWhite == isWhiteTurn)
@@ -1244,27 +1256,27 @@ public class main : NetworkBehaviour
         SpawnAllChessmen();
     }
 
-    [Command]
-    public void CmdMoveChessman(int currentX, int currentY, int x, int y)
-    {
-        RpcMoveChessman(currentX, currentY, x, y);
-        //RpcMoveChessman();
-        //MoveHelp(currentX, currentY);
-        //MoveChessman(x, y);
-    }
+    //[Command]
+    //public void CmdMoveChessman(int currentX, int currentY, int x, int y)
+    //{
+    //    RpcMoveChessman(currentX, currentY, x, y);
+    //    //RpcMoveChessman();
+    //    //MoveHelp(currentX, currentY);
+    //    //MoveChessman(x, y);
+    //}
 
-    [ClientRpc]
-    public void RpcMoveChessman(int currentX, int currentY, int x, int y)
-    {
-        if(!main.isMyTurn)
-        {
-            main.remotelyMoved = true;
-            main.selectedChessman = main.chessmans[currentX,currentY];
-            main.rSelectionX = x;
-            main.rSelectionY = y;
-        }
-        main.isMyTurn = !main.isMyTurn;
-    }
+    //[ClientRpc]
+    //public void RpcMoveChessman(int currentX, int currentY, int x, int y)
+    //{
+    //    if(!main.isMyTurn)
+    //    {
+    //        main.remotelyMoved = true;
+    //        main.selectedChessman = main.chessmans[currentX,currentY];
+    //        main.rSelectionX = x;
+    //        main.rSelectionY = y;
+    //    }
+    //    main.isMyTurn = !main.isMyTurn;
+    //}
 
     private void MoveHelp(int currentX, int currentY)
     {
